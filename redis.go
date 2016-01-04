@@ -29,6 +29,10 @@ var connection *redis.Conn
 // will be returned describing the failure.
 //
 // @param url: The URL address to which the connection will be established.
+// EX: redis://127.0.0.1:6379/200
+//
+// NOTE: the path '200' specifies the DB ID number. Use this to create seperate instances
+//
 func Connect(url string) error {
 	pool = createNewConnectionPool(url)
 	return pingRedis(pool.Get(), time.Time{})
@@ -122,6 +126,25 @@ func (s RedisSession) TTLForKey(key string) (int, error) {
 
 	errorMsg := fmt.Sprintf("Error processing the Key")
 	return 0, errors.New(errorMsg)
+}
+
+// FlushAllKeys wipes out all keys in the current redis DB
+func (s RedisSession) FlushAllKeys() error {
+	val, err := s.connection.Do("FLUSHDB")
+
+	if err != nil {
+		return err
+	}
+
+	errorMsg := "There was an error flushing the DB\n"
+	if byteVal, ok := val.(string); ok {
+		if string(byteVal) == "OK" {
+			return nil
+		}
+		return errors.New(errorMsg)
+	}
+
+	return errors.New(errorMsg)
 }
 
 //---------

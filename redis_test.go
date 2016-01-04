@@ -7,7 +7,7 @@ import (
 
 import . "github.com/meshhq/meshCore/Godeps/_workspace/src/gopkg.in/check.v1"
 
-const localRedisURL = "redis://127.0.0.1:6379/0"
+const localRedisURL = "redis://127.0.0.1:6379/2"
 
 // Hook up gocheck into the "go test" runner.
 func Test(t *testing.T) { TestingT(t) }
@@ -152,6 +152,32 @@ func (s *MeshRedisTest) TestUpdatingAKeysExpiration(c *C) {
 
 	// Sleep for timeout
 	time.Sleep(2 * time.Second)
+	val, err = session.GetString(key)
+	c.Assert(val, Equals, "")
+	c.Assert(err, Equals, nil)
+}
+
+//---------
+// Flushing All Keys
+//---------
+
+func (s *MeshRedisTest) TestFlushAllKeys(c *C) {
+	key := "someKey"
+
+	// Test getting a new MeshRedisSession
+	session := NewSession()
+
+	// Set / Check initial value
+	session.SetString(key, "bar")
+	val, err := session.GetString(key)
+	c.Assert(val, Equals, "bar")
+	c.Assert(err, Equals, nil)
+
+	// Flush the DB
+	err = session.FlushAllKeys()
+	c.Assert(err, Equals, nil)
+
+	// Test that string is empty
 	val, err = session.GetString(key)
 	c.Assert(val, Equals, "")
 	c.Assert(err, Equals, nil)
