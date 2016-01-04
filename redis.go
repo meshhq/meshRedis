@@ -67,8 +67,8 @@ func pingRedis(connection redis.Conn, _ time.Time) error {
 }
 
 // Ping is used internally to ping the connection
-func (session RedisSession) Ping() error {
-	return pingRedis(session.connection, time.Time{})
+func (s RedisSession) Ping() error {
+	return pingRedis(s.connection, time.Time{})
 }
 
 // NewSession issues a new meshRedis ResisSession. This will be the
@@ -79,29 +79,70 @@ func NewSession() *RedisSession {
 }
 
 // Close kills the RedisSession instance
-func (session RedisSession) Close() error {
-	return session.connection.Close()
+func (s RedisSession) Close() error {
+	return s.connection.Close()
 }
 
 //---------
 // Redis Commands
 //---------
 
+// UpdateExpirationOfKey updates the expiration value of a key in redis
+// If no key is found, the `error` return value will be non-nil
+func (s RedisSession) UpdateExpirationOfKey(key string, seconds int) error {
+	val, err := s.connection.Do("EXPIRE", key, seconds)
+	if err != nil {
+		return err
+	}
+
+	if updateTime, ok := val.(int64); ok {
+		time := int(updateTime)
+		if time == 0 {
+			errorMsg := fmt.Sprintf("That key does not exist")
+			return errors.New(errorMsg)
+		}
+		return nil
+	}
+
+	errorMsg := fmt.Sprintf("Error updating the expiration")
+	return errors.New(errorMsg)
+}
+
+// TTLForKey returns the lifetime of the value associated with the key
+// If no key is found, the `error` return value will be non-nil
+func (s RedisSession) TTLForKey(key string) (int, error) {
+	ttl, err := s.connection.Do("TTL", key)
+	if err != nil || ttl == nil {
+		return 0, err
+	}
+
+	if updateTime, ok := ttl.(int64); ok {
+		return int(updateTime), err
+	}
+
+	errorMsg := fmt.Sprintf("Error processing the Key")
+	return 0, errors.New(errorMsg)
+}
+
+//---------
+// String Commands
+//---------
+
 // SetString assigns the string to the supplied key in redis
-func (session RedisSession) SetString(key string, value string) error {
-	_, err := session.connection.Do("SET", key, value)
+func (s RedisSession) SetString(key string, value string) error {
+	_, err := s.connection.Do("SET", key, value)
 	return err
 }
 
 // SetStringWithExpiration assigns the int to the supplied key in redis
-func (session RedisSession) SetStringWithExpiration(key string, seconds int, value string) error {
-	_, err := session.connection.Do("SETEX", key, seconds, value)
+func (s RedisSession) SetStringWithExpiration(key string, seconds int, value string) error {
+	_, err := s.connection.Do("SETEX", key, seconds, value)
 	return err
 }
 
 // GetString retreives the value from the store.
-func (session RedisSession) GetString(key string) (value string, err error) {
-	val, err := session.connection.Do("GET", key)
+func (s RedisSession) GetString(key string) (value string, err error) {
+	val, err := s.connection.Do("GET", key)
 
 	if err != nil || val == nil {
 		return "", err
@@ -115,21 +156,25 @@ func (session RedisSession) GetString(key string) (value string, err error) {
 	return "", errors.New(errorMsg)
 }
 
+//---------
+// Int Commands
+//---------
+
 // SetInt assigns the int to the supplied key in redis
-func (session RedisSession) SetInt(key string, value int) error {
-	_, err := session.connection.Do("SET", key, value)
+func (s RedisSession) SetInt(key string, value int) error {
+	_, err := s.connection.Do("SET", key, value)
 	return err
 }
 
 // SetIntWithExpiration assigns the int to the supplied key in redis
-func (session RedisSession) SetIntWithExpiration(key string, seconds int, value int) error {
-	_, err := session.connection.Do("SETEX", key, seconds, value)
+func (s RedisSession) SetIntWithExpiration(key string, seconds int, value int) error {
+	_, err := s.connection.Do("SETEX", key, seconds, value)
 	return err
 }
 
 // GetInt retreives the value from the store.
-func (session RedisSession) GetInt(key string) (value int, err error) {
-	val, err := session.connection.Do("GET", key)
+func (s RedisSession) GetInt(key string) (value int, err error) {
+	val, err := s.connection.Do("GET", key)
 	if err != nil || val == nil {
 		return 0, err
 	}
