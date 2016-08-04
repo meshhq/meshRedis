@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-import . "github.com/meshhq/meshCore/Godeps/_workspace/src/gopkg.in/check.v1"
+import . "gopkg.in/check.v1"
 
 const localRedisURL = "redis://127.0.0.1:6379/2"
 
