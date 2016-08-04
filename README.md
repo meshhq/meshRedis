@@ -1,6 +1,7 @@
 MeshRedis
 ======
 [![Build Status](https://travis-ci.org/meshhq/meshRedis.svg?branch=master)](https://travis-ci.org/meshhq/meshRedis)
+![](https://img.shields.io/badge/license-MIT-blue.svg)
 MeshRedis is a more strongly typed wrapper around [RediGo](https://github.com/garyburd/redigo).
 
 ### Status
